@@ -118,6 +118,53 @@ class HVCINT_Params(Parameters):
         neuron.k_r = 0.01
 
 
+def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, noise=0.2, ramp=1, rampup_t=None, rampdown_t=None, psp_dur=0.04, freq=1/(0.02), synaptize=False, noisy=False):   
+    T = df['t'].max().round() #maximum time
+    #step current
+    if stim == 'step':
+        df['step'] = np.ones(np.size(df['t']))*base
+        step = (df['t']>st) & (df['t']<st+dur)
+        df['step'][step] = mag
+    #sine current
+    elif stim == 'sin':
+        df['sin'] = np.ones(np.size(df['t']))*base
+        step = (df['t']>st) & (df['t']<st+dur)
+        df['sin'][step] = mag*0.1*np.sin(1e2*df['t'][step]+5)+mag
+    #linear increase
+    elif stim == 'lin':
+        df['lin'] = np.ones(np.size(df['t']))*base
+        step = (df['t']>st) & (df['t']<st+dur)
+        t_step = df['t'][step]; l_t_step = np.max(t_step)-np.min(t_step);
+        df['lin'][step] = (mag/l_t_step)*(t_step)-(mag/l_t_step)*(t_step.iloc[0])
+    #pulsatile
+    elif stim == 'pulse':
+        df['pulse'] = np.ones(np.size(df['t']))*base
+        step = (df['t']<0)
+        for i in np.arange(st, st+dur, pwidth+gap):
+            step = step|((df['t']>=i)&(df['t']<=i+pwidth))
+        df['pulse'][step] = mag    
+    #bump
+    elif stim == 'bump':
+        df['bump'] = np.ones(np.size(df['t']))*base
+        bump = (df['t']>st) & (df['t']<st+dur)
+        df['bump'][bump] = mag
+        rampup_t = ramp/2 if (rampup_t is None) else rampup_t; rampdown_t = ramp/2 if (rampdown_t is None) else rampdown_t
+        rampup = (df['t']>st) & (df['t']<st+rampup_t); rampdown = (df['t']>st+dur-rampdown_t) & (df['t']<st+dur)
+        t_step = df['t'][rampup]; l_t_step = np.max(t_step)-np.min(t_step);
+        df['bump'][rampup] = (mag/l_t_step)*(t_step)-(mag/l_t_step)*(t_step.iloc[0])
+        t_step = df['t'][rampdown]; l_t_step = np.max(t_step)-np.min(t_step);
+        df['bump'][rampdown] = (-mag/l_t_step)*(t_step)+(mag/l_t_step)*(t_step.iloc[-1])
+    
+    #synaptize the stimulus - makes the stimulus high frequency pulse like (realistic)
+    if synaptize==True:
+        step = (df['t']<0)
+        for i in np.arange(0, T, psp_dur+(1/freq)):
+            step = step|((df['t']>=i)&(df['t']<=i+(1/freq)))
+        df[stim][step] = 0    
+    #make the stimulus noisy                     
+    if noisy==True:
+        df[stim] = df[stim]+(np.ones(np.size(df['t']))*noise*np.random.uniform(-1,1,np.size(df['t'])))        
 
+    return df[stim] #return the stimulus asked for
     
 
