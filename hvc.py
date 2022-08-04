@@ -119,7 +119,7 @@ class HVCINT_Params(Parameters):
 
 
 def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, noise=0.2, ramp=1, rampup_t=None, rampdown_t=None, psp_dur=0.04, freq=1/(0.02), synaptize=False, noisy=False):   
-    T = df['t'].max().round() #maximum time
+    T = np.round(df['t'].max()) #maximum time
     #step current
     if stim == 'step':
         df['step'] = np.ones(np.size(df['t']))*base
