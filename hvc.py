@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import numpy as np
-import pandas as pd
 from brian2 import *
 
 @dataclass
@@ -68,7 +67,7 @@ class HVCX_Params(Parameters):
 
     def __init__(neuron) -> None:
         """
-        Constructor for HVC_X neurons
+        Constructor for defining parameters specific to HVC_X neurons
         """
         super().__init__()
         neuron.g_Na = 450*nS
@@ -86,7 +85,7 @@ class HVCRA_Params(Parameters):
 
     def __init__(neuron) -> None:
         """
-        Constructor for HVC_RA neurons
+        Constructor for defining parameters specific to HVC_RA neurons
         """
         super().__init__()
         neuron.g_Na = 300*nS
@@ -104,7 +103,7 @@ class HVCINT_Params(Parameters):
 
     def __init__(neuron) -> None:
         """
-        Constructor for HVC_INT neurons
+        Constructor for defining parameters specific to HVC_INT neurons
         """
         super().__init__()
         neuron.g_Na = 800*nS
