@@ -1,6 +1,8 @@
 from dataclasses import dataclass
+from tkinter import NO
 import numpy as np
 from brian2 import *
+import json
 
 @dataclass
 class Parameters:
@@ -61,11 +63,16 @@ class Parameters:
         neuron.R_pump = 0.0006*(mmolar/msecond)
         neuron.K_p = 15*mmolar
         neuron.p_rf = 100
-
+        neuron.Ca_ex = 2.5*mmolar
+        neuron.F = 96_485*(coulomb/mole)
+        neuron.R = 8.314*(joule/(mole*kelvin))
+        neuron.T = 298*kelvin
+        neuron.alpha_Na = 0.0001*mmolar*((msecond*uamp)**(-1))
+        neuron.Naeq = 8.0*mmolar
 
 class HVCX_Params(Parameters):
 
-    def __init__(neuron) -> None:
+    def __init__(neuron, config_file=None) -> None:
         """
         Constructor for defining parameters specific to HVC_X neurons
         """
@@ -80,10 +87,15 @@ class HVCX_Params(Parameters):
         neuron.C_m = 100*pfarad
         neuron.k_r = 0.3
 
+        if config_file:
+            with open(config_file) as f:
+                content = json.loads(f.read())
+                for k, v in content.items():
+                    exec(f"{k} = {v}")
 
 class HVCRA_Params(Parameters):
 
-    def __init__(neuron) -> None:
+    def __init__(neuron, config_file=None) -> None:
         """
         Constructor for defining parameters specific to HVC_RA neurons
         """
@@ -98,10 +110,15 @@ class HVCRA_Params(Parameters):
         neuron.C_m = 20*pfarad
         neuron.k_r = 0.95
 
+        if config_file:
+            with open(config_file) as f:
+                content = json.loads(f.read())
+                for k, v in content.items():
+                    exec(f"{k} = {v}")
 
 class HVCINT_Params(Parameters):
 
-    def __init__(neuron) -> None:
+    def __init__(neuron, config_file=None) -> None:
         """
         Constructor for defining parameters specific to HVC_INT neurons
         """
@@ -115,6 +132,14 @@ class HVCINT_Params(Parameters):
         neuron.g_CaT = 1.1*nS
         neuron.C_m = 75*pfarad
         neuron.k_r = 0.01
+
+        
+        if config_file:
+            with open(config_file) as f:
+                content = json.loads(f.read())
+                for k, v in content.items():
+                    exec(f"{k} = {v}")
+
 
 
 def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, noise=0.2, ramp=1, rampup_t=None, rampdown_t=None, psp_dur=0.04, freq=1/(0.02), synaptize=False, noisy=False):   
