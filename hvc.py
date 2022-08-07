@@ -191,4 +191,5 @@ def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, nois
 
     return df[stim] #return the stimulus asked for
     
-
+if __name__ == "__main__":
+    pass 
