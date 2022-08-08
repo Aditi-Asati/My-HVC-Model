@@ -3,16 +3,17 @@ import numpy as np
 import pandas as pd
 import hvc
 
-#time parameters:
-delta = 1e-5 #in sec
-duration = 1 # in sec
-
-#creating a "t" named column for time 
-time_vec = np.arange(0,duration,delta)
-df = pd.DataFrame({'t':time_vec})
-
 
 def simulate_hvc(kind: str, mag_current: int, config_file=None):
+    
+    #time parameters:
+    delta = 1e-5 #in sec
+    duration = 1 # in sec
+
+    #creating a "t" named column for time 
+    time_vec = np.arange(0,duration,delta)
+    df = pd.DataFrame({'t':time_vec})
+    
     """
 
     @params
@@ -109,7 +110,7 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None):
     N.V = -70*mV
 
     #Current input
-    current = np.array(hvc.stimuli(df,mag_current,stim = 'step',dur=0.3,st=1.5))
+    current = np.array(hvc.stimuli(df,mag_current,stim = 'step',dur=0.3,st=0.2))
     curr_in = TimedArray(current*pA, dt=delta*second)
 
     #Record membrane potential V as it evolves during the simulation 
