@@ -2,37 +2,34 @@ from brian2 import *
 import numpy as np
 import pandas as pd
 import hvc
-import json
 
 
-def simulate_hvc(kind: str, mag_current: int, config_file=None, duration = 1, delta = 1e-5):
-    
-
-
-    #creating a "t" named column for time 
-    time_vec = np.arange(0,duration,delta)
-    df = pd.DataFrame({'t':time_vec})
-    
+def simulate_hvc(kind: str, mag_current: int, config_file=None, duration: int = 1, delta: float = 1e-5):
     """
 
     @params
+
     kind: str -> takes the type of the hvc neuron as either "X/x", "RA/ra" or "INT/int"
     mag: int -> magnitude of the injected stimulus
     config_file -> json file path containing constant values that were varied while
     performing various simulations
+    duration -> duration for which we are running the simulation
+    delta -> time interval between two timestamps
 
-    simulates the firing activity of hvc neurons based on the neuron type and stimulus magnitude
+    simulates the firing activity of hvc neurons based on the neuron type, stimulus magnitude, and duration
     """
 
+    #creating a "t" named column for time 
+    time_vec = np.arange(0,duration,delta)
+    df = pd.DataFrame({'t':time_vec})
 
     # The Conductance Based Model Equations
     eqs = '''
     Iapp = curr_in(t) : ampere
 
-    dV/dt = (-Il -I_K -I_Na -I_Nap -I_A -I_Cal -I_CaT -I_SK -I_KNa +Iapp)/C_m : volt
+    dV/dt = (-Il -I_K -I_Na -I_Nap -I_A -I_Cal -I_CaT -I_SK -I_KNa +Iapp +Ih)/C_m : volt
 
-    #check Ih (something odd about units?)
-
+    
     Il = g_l*(V-Vl) : ampere
 
     I_K = g_K*(n**4)*(V-Vk) : ampere
@@ -87,7 +84,7 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None, duration = 1, de
 
     '''
 
-    # creating a model HVC_X neuron 
+    # creating a model HVC neuron object depending on the type of hvc neuron
     if kind.lower() == "x":
         params = hvc.HVCX_Params(config_file)
 
@@ -99,15 +96,15 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None, duration = 1, de
 
     else:
         print("invalid input")
+
     #declaring the instance attributes of HVCX_Params class as global variables since the
     #NeuronGroup class of brian2 requires the variables to be defined globally (atleast the
-    # variables which do not have a time dependent component)
-
+    #variables which do not have a time dependent component)
     for key in params.__dict__:
         globals()[key] = params.__dict__[key]
 
 
-# Threshold and refractoriness are only used for spike counting
+    # Threshold and refractoriness are only used for spike counting
     N = NeuronGroup(1, eqs, threshold='V > 0*mV', refractory='V > 0*mV', method="rk4")
     N.V = -70*mV
 
@@ -115,7 +112,7 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None, duration = 1, de
     current = np.array(hvc.stimuli(df,mag_current,stim = 'step',dur=2,st=0.3))
     curr_in = TimedArray(current*pA, dt=delta*second)
 
-    #Record membrane potential V as it evolves during the simulation 
+    #Record membrane potential V as it evolves with time during the simulation 
     M = StateMonitor(N, ["V"], record=True)
     run(duration*second)
     return M

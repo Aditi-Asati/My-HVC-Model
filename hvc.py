@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from tkinter import NO
 import numpy as np
 from brian2 import *
 import json
@@ -12,7 +11,7 @@ class Parameters:
     
     def __init__(neuron) -> None:
         """
-        Constructor
+        Constructor for defining constant values
         """
 
         neuron.Vl = -70*mV
@@ -71,9 +70,17 @@ class Parameters:
         neuron.Naeq = 8.0*mmolar
 
 class HVCX_Params(Parameters):
+    """
+    defines all the parameter values for a model HVC_X neuron
+    """
 
     def __init__(neuron, config_file=None) -> None:
         """
+
+        @params
+
+        config_file -> json file path(as string) containing the name and value of the parameter (as key-value pairs)that is changed for performing a particular simulation
+
         Constructor for defining parameters specific to HVC_X neurons
         """
         super().__init__()
@@ -87,6 +94,7 @@ class HVCX_Params(Parameters):
         neuron.C_m = 100*pfarad
         neuron.k_r = 0.3
 
+        # if the path of json file is passed as a argument while constructing an object of HVCX_Params class, the keys in the json file are set as instance attributes with their corresponding values 
         if config_file:
             with open(config_file) as f:
                 content = json.loads(f.read())
@@ -94,9 +102,16 @@ class HVCX_Params(Parameters):
                     exec(f"neuron.{key} = {value}")
 
 class HVCRA_Params(Parameters):
+    """
+    defines all the parameter values for a model HVC_RA neuron
+    """
 
     def __init__(neuron, config_file=None) -> None:
         """
+        @params
+
+        config_file -> json file path(as string) containing the name and value of the parameter (as key-value pairs)that is changed for performing a particular simulation
+
         Constructor for defining parameters specific to HVC_RA neurons
         """
         super().__init__()
@@ -117,9 +132,16 @@ class HVCRA_Params(Parameters):
                     exec(f"neuron.{key} = {value}")
 
 class HVCINT_Params(Parameters):
+    """
+    defines all the parameter values for a model HVC_INT neuron
+    """
 
     def __init__(neuron, config_file=None) -> None:
         """
+        @params
+
+        config_file -> json file path(as string) containing the name and value of the parameter (as key-value pairs)that is changed for performing a particular simulation
+
         Constructor for defining parameters specific to HVC_INT neurons
         """
         super().__init__()
@@ -139,24 +161,41 @@ class HVCINT_Params(Parameters):
                 for key, value in content.items():
                     exec(f"neuron.{key} = {value}")
 
+
 def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, noise=0.2, ramp=1, rampup_t=None, rampdown_t=None, psp_dur=0.04, freq=1/(0.02), synaptize=False, noisy=False):   
+    """
+    @params
+
+    df -> dataframe
+    mag: int -> magnitude of the injected stimulus
+    stim: str -> type of the stimulus
+    dur: int -> duration of the stimulus
+    st: int -> start time of the stimulus
+    etc
+
+    generates a stimulus 
+    """
     T = np.round(df['t'].max()) #maximum time
+
     #step current
     if stim == 'step':
         df['step'] = np.ones(np.size(df['t']))*base
         step = (df['t']>st) & (df['t']<st+dur)
         df['step'][step] = mag
+
     #sine current
     elif stim == 'sin':
         df['sin'] = np.ones(np.size(df['t']))*base
         step = (df['t']>st) & (df['t']<st+dur)
         df['sin'][step] = mag*0.1*np.sin(1e2*df['t'][step]+5)+mag
+
     #linear increase
     elif stim == 'lin':
         df['lin'] = np.ones(np.size(df['t']))*base
         step = (df['t']>st) & (df['t']<st+dur)
         t_step = df['t'][step]; l_t_step = np.max(t_step)-np.min(t_step);
         df['lin'][step] = (mag/l_t_step)*(t_step)-(mag/l_t_step)*(t_step.iloc[0])
+
     #pulsatile
     elif stim == 'pulse':
         df['pulse'] = np.ones(np.size(df['t']))*base
@@ -164,6 +203,7 @@ def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, nois
         for i in np.arange(st, st+dur, pwidth+gap):
             step = step|((df['t']>=i)&(df['t']<=i+pwidth))
         df['pulse'][step] = mag    
+
     #bump
     elif stim == 'bump':
         df['bump'] = np.ones(np.size(df['t']))*base
@@ -182,6 +222,7 @@ def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, nois
         for i in np.arange(0, T, psp_dur+(1/freq)):
             step = step|((df['t']>=i)&(df['t']<=i+(1/freq)))
         df[stim][step] = 0    
+        
     #make the stimulus noisy                     
     if noisy==True:
         df[stim] = df[stim]+(np.ones(np.size(df['t']))*noise*np.random.uniform(-1,1,np.size(df['t'])))        
