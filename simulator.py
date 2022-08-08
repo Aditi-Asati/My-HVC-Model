@@ -2,13 +2,12 @@ from brian2 import *
 import numpy as np
 import pandas as pd
 import hvc
+import json
 
 
-def simulate_hvc(kind: str, mag_current: int, config_file=None):
+def simulate_hvc(kind: str, mag_current: int, config_file=None, duration = 1, delta = 1e-5):
     
-    #time parameters:
-    delta = 1e-5 #in sec
-    duration = 1 # in sec
+
 
     #creating a "t" named column for time 
     time_vec = np.arange(0,duration,delta)
@@ -24,6 +23,7 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None):
 
     simulates the firing activity of hvc neurons based on the neuron type and stimulus magnitude
     """
+
 
     # The Conductance Based Model Equations
     eqs = '''
@@ -86,31 +86,33 @@ def simulate_hvc(kind: str, mag_current: int, config_file=None):
     rsinf = 1.0*(1.0+exp((theta_rs-V)/sigma_rs))**(-1) : 1
 
     '''
+
     # creating a model HVC_X neuron 
     if kind.lower() == "x":
-        params = hvc.HVCX_Params()
+        params = hvc.HVCX_Params(config_file)
 
     elif kind.lower() == "ra":
-        params = hvc.HVCRA_Params()
+        params = hvc.HVCRA_Params(config_file)
 
     elif kind.lower() == "int":
-        params = hvc.HVCINT_Params()
+        params = hvc.HVCINT_Params(config_file)
 
     else:
         print("invalid input")
     #declaring the instance attributes of HVCX_Params class as global variables since the
     #NeuronGroup class of brian2 requires the variables to be defined globally (atleast the
     # variables which do not have a time dependent component)
+
     for key in params.__dict__:
         globals()[key] = params.__dict__[key]
 
 
 # Threshold and refractoriness are only used for spike counting
-    N = NeuronGroup(1, eqs, threshold='V > 0*mV', refractory='V > 0*mV')
+    N = NeuronGroup(1, eqs, threshold='V > 0*mV', refractory='V > 0*mV', method="rk4")
     N.V = -70*mV
 
     #Current input
-    current = np.array(hvc.stimuli(df,mag_current,stim = 'step',dur=0.3,st=0.2))
+    current = np.array(hvc.stimuli(df,mag_current,stim = 'step',dur=2,st=0.3))
     curr_in = TimedArray(current*pA, dt=delta*second)
 
     #Record membrane potential V as it evolves during the simulation 

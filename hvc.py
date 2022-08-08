@@ -90,8 +90,8 @@ class HVCX_Params(Parameters):
         if config_file:
             with open(config_file) as f:
                 content = json.loads(f.read())
-                for k, v in content.items():
-                    exec(f"{k} = {v}")
+                for key, value in content.items():
+                    exec(f"neuron.{key} = {value}")
 
 class HVCRA_Params(Parameters):
 
@@ -113,8 +113,8 @@ class HVCRA_Params(Parameters):
         if config_file:
             with open(config_file) as f:
                 content = json.loads(f.read())
-                for k, v in content.items():
-                    exec(f"{k} = {v}")
+                for key, value in content.items():
+                    exec(f"neuron.{key} = {value}")
 
 class HVCINT_Params(Parameters):
 
@@ -133,14 +133,11 @@ class HVCINT_Params(Parameters):
         neuron.C_m = 75*pfarad
         neuron.k_r = 0.01
 
-        
         if config_file:
             with open(config_file) as f:
                 content = json.loads(f.read())
-                for k, v in content.items():
-                    exec(f"{k} = {v}")
-
-
+                for key, value in content.items():
+                    exec(f"neuron.{key} = {value}")
 
 def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, noise=0.2, ramp=1, rampup_t=None, rampdown_t=None, psp_dur=0.04, freq=1/(0.02), synaptize=False, noisy=False):   
     T = np.round(df['t'].max()) #maximum time
@@ -192,4 +189,4 @@ def stimuli(df, mag, stim='pulse', dur=3, st=1, pwidth=0.05, gap=2, base=0, nois
     return df[stim] #return the stimulus asked for
     
 if __name__ == "__main__":
-    pass 
+    my_neuron = HVCRA_Params("./configs/rahvc1.json")
